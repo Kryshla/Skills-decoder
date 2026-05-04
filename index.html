@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PhD Skills Decoder — Empirical Careers</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --black: #0e0e0e;
+    --purple: #7B5EA7;
+    --purple-light: #b39ddb;
+    --pink: #e8488a;
+    --teal: #4ecdc4;
+    --orange: #ff8c42;
+    --cream: #f7f4ef;
+    --mid: #2a2a2a;
+    --text-light: #888;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--black);
+    font-family: 'DM Sans', sans-serif;
+    color: var(--cream);
+    min-height: 100vh;
+  }
+
+  .page {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 48px 24px 80px;
+  }
+
+  .header { margin-bottom: 48px; }
+
+  .eyebrow {
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--teal);
+    font-weight: 500;
+    margin-bottom: 16px;
+  }
+
+  h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(36px, 6vw, 58px);
+    line-height: 1.05;
+    color: var(--cream);
+    margin-bottom: 16px;
+  }
+
+  h1 em { font-style: italic; color: var(--pink); }
+
+  .subtitle {
+    font-size: 16px;
+    color: var(--text-light);
+    line-height: 1.6;
+    max-width: 540px;
+    font-weight: 300;
+  }
+
+  .divider {
+    width: 48px;
+    height: 2px;
+    background: var(--purple);
+    margin: 28px 0;
+  }
+
+  .instruction {
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--purple-light);
+    margin-bottom: 20px;
+    font-weight: 500;
+  }
+
+  .category { margin-bottom: 32px; }
+
+  .category-label {
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--text-light);
+    margin-bottom: 12px;
+    font-weight: 500;
+  }
+
+  .skills-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .skill-chip {
+    padding: 8px 16px;
+    border: 1px solid #2e2e2e;
+    border-radius: 100px;
+    font-size: 13.5px;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    background: transparent;
+    color: #aaa;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 400;
+    user-select: none;
+  }
+
+  .skill-chip:hover { border-color: var(--purple); color: var(--cream); }
+
+  .skill-chip.selected {
+    background: var(--purple);
+    border-color: var(--purple);
+    color: white;
+    font-weight: 500;
+  }
+
+  .selected-count {
+    font-size: 13px;
+    color: var(--text-light);
+    margin-bottom: 28px;
+    min-height: 20px;
+  }
+
+  .selected-count span { color: var(--teal); font-weight: 500; }
+
+  .decode-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--pink);
+    color: white;
+    border: none;
+    padding: 16px 32px;
+    border-radius: 100px;
+    font-size: 15px;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 600;
+    cursor: pointer;
+    letter-spacing: 0.02em;
+    transition: all 0.2s ease;
+  }
+
+  .decode-btn:hover:not(:disabled) { background: #d43d7d; transform: translateY(-1px); }
+  .decode-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .decode-btn .arrow { font-size: 18px; transition: transform 0.2s; }
+  .decode-btn:hover:not(:disabled) .arrow { transform: translateX(4px); }
+
+  .loading {
+    display: none;
+    align-items: center;
+    gap: 12px;
+    margin-top: 40px;
+    color: var(--text-light);
+    font-size: 14px;
+  }
+
+  .loading.active { display: flex; }
+
+  .spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid #2e2e2e;
+    border-top-color: var(--teal);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .results { display: none; margin-top: 56px; }
+  .results.active { display: block; }
+
+  .results-eyebrow {
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--teal);
+    font-weight: 500;
+    margin-bottom: 12px;
+  }
+
+  .results-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 28px;
+    color: var(--cream);
+    margin-bottom: 32px;
+  }
+
+  .career-card {
+    border: 1px solid #1e1e1e;
+    border-radius: 16px;
+    padding: 28px 32px;
+    margin-bottom: 16px;
+    background: #141414;
+    transition: border-color 0.2s;
+    animation: fadeUp 0.4s ease both;
+  }
+
+  .career-card:hover { border-color: #333; }
+  .career-card:nth-child(2) { animation-delay: 0.08s; }
+  .career-card:nth-child(3) { animation-delay: 0.16s; }
+  .career-card:nth-child(4) { animation-delay: 0.24s; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .career-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 20px;
+    color: var(--cream);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .career-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+  .career-desc { font-size: 14px; color: #999; line-height: 1.65; margin-bottom: 16px; }
+
+  .skills-used { display: flex; flex-wrap: wrap; gap: 6px; }
+
+  .skill-tag {
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 100px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+  }
+
+  .cta-block {
+    margin-top: 48px;
+    padding: 36px;
+    background: linear-gradient(135deg, #1a0f2e, #0f1a2e);
+    border-radius: 20px;
+    border: 1px solid #2a2040;
+    animation: fadeUp 0.4s 0.4s ease both;
+    display: none;
+  }
+
+  .cta-block.active { display: block; }
+
+  .cta-eyebrow {
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--purple-light);
+    font-weight: 500;
+    margin-bottom: 12px;
+  }
+
+  .cta-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 24px;
+    color: var(--cream);
+    margin-bottom: 12px;
+  }
+
+  .cta-body {
+    font-size: 14px;
+    color: #888;
+    line-height: 1.6;
+    margin-bottom: 24px;
+    max-width: 480px;
+  }
+
+  .cta-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: transparent;
+    border: 1px solid var(--purple);
+    color: var(--purple-light);
+    padding: 12px 24px;
+    border-radius: 100px;
+    font-size: 13px;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.04em;
+    text-decoration: none;
+  }
+
+  .cta-link:hover { background: var(--purple); color: white; }
+
+  .reset-btn {
+    display: none;
+    margin-top: 16px;
+    background: transparent;
+    border: none;
+    color: var(--text-light);
+    font-size: 13px;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    text-decoration: underline;
+    padding: 0;
+  }
+
+  .reset-btn.active { display: inline-block; }
+
+  .error-msg {
+    display: none;
+    margin-top: 24px;
+    padding: 16px 20px;
+    background: #1a0f0f;
+    border: 1px solid #3a1a1a;
+    border-radius: 10px;
+    color: #cc6666;
+    font-size: 13px;
+  }
+
+  .error-msg.active { display: block; }
+
+  @media (max-width: 600px) {
+    .page { padding: 32px 16px 60px; }
+    .career-card { padding: 20px; }
+    .cta-block { padding: 24px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="header">
+    <div class="eyebrow">Empirical Careers</div>
+    <h1>The PhD<br>Skills <em>Decoder</em></h1>
+    <div class="divider"></div>
+    <p class="subtitle">Your PhD built more than you realise. Select the skills that come naturally to you and discover where they could take your career.</p>
+  </div>
+
+  <p class="instruction">Select your skills</p>
+
+  <div id="skills-section">
+
+    <div class="category">
+      <div class="category-label">Research & Analysis</div>
+      <div class="skills-grid">
+        <div class="skill-chip" onclick="toggleSkill(this)" data-skill="Literature review & synthesis">Literature review & synthesis</div>
+        <div class="skill-chip" onclick="toggleSkill(this)" data-skill="Critical analysis">Critical analysis</div>
+        <div class="skill-chip" onclick="toggleSkill(this)" data-skill="Hypothesis development">Hypothesis development</div>
+        <div class="skill-chip" onclick="toggleSkill(this)" data-skill="Systematic review">Systematic review</div>
+        <div class="skill-chip" onclick="toggleSkill(this)" data-skill="Evidence synthesis">Evidence synthesis</div>
+        <div class="skill-chip" onclick="toggleSkill(this)" data-skill="Research design">Research design</div>
+        <div class="skill-chip" onclick="toggleSkill(this)" data-skill="Ethics & compliance">Ethics & compliance</div>
+      </div>
+    </div>
+
+    <div class="category">
+      <div class="category-label">Data & Methods</div>
+      <div class="skills-grid">
+        <div class="skill-chip" onclick="toggleSkill(this)" data-skill="Statistical analysis">Statistical analysis</div>
+        <div class="skill-chip" onclick="toggleSkill(this)" data-skill="Qualitative research">Qualitative research</div>
+        <div class="skill-chip" onclick="toggleSkill(this)" data-skill="Quantitative research">Quantitative research</div>
+        <div class="skill-chip" onclick="toggleSkill(this)" data-skill="Data visualisation">Data visualisation</div>
+        <div class="skill-chip" onclick="toggleSkill(this)" data-skill="Lab techniques">Lab techniques</div>
+        <div class="skill-chip" onclick="toggleSkill(this)" data-skill="Clinical research methods">Clinical research methods</div>
+        <div class="skill-chip" onclick="toggleSkill(this)" data-skill="Bioinformatics & coding">Bioinformatics & coding</div>
+      </div>
+    </div>
+
+    <div class="category">
+      <div class="category-label">Writing & Communication</div>
+      <div class="skills-grid">
+        <div class="skill-chip" onclick="toggleSkill(this)" data-skill="Academic writing">Academic writing</div>
+        <div class="skill-chip" onclick="toggleSkill(this)" data-skill="Grant writing">Grant writing</div>
+        <div class="skill-chip" onclick="toggleSkill(this)" data-skill="Science communication">Science communication</div>
+        <div class="skill-chip" onclick="toggleSkill(this)" data-skill="Presenting complex ideas">Presenting complex ideas</div>
+        <div class="skill-chip" onclick="toggleSkill(this)" data-skill="Policy writing">Policy writing</div>
+        <div class="skill-chip" onclick="toggleSkill(this)" data-skill="Report writing">Report writing</div>
+        <div class="skill-chip" onclick="toggleSkill(this)" data-skill="Media & public engagement">Media & public engagement</div>
+      </div>
+    </div>
+
+    <div class="category">
+      <div class="category-label">People & Leadership</div>
+      <div class="skills-grid">
+        <div class="skill-chip" onclick="toggleSkill(this)" data-skill="Supervision & mentoring">Supervision & mentoring</div>
+        <div class="skill-chip" onclick="toggleSkill(this)" data-skill="Teaching & facilitation">Teaching & facilitation</div>
+        <div class="skill-chip" onclick="toggleSkill(this)" data-skill="Team collaboration">Team collaboration</div>
+        <div class="skill-chip" onclick="toggleSkill(this)" data-skill="Stakeholder engagement">Stakeholder engagement</div>
+        <div class="skill-chip" onclick="toggleSkill(this)" data-skill="Community engagement">Community engagement</div>
+        <div class="skill-chip" onclick="toggleSkill(this)" data-skill="Cross-disciplinary collaboration">Cross-disciplinary collaboration</div>
+      </div>
+    </div>
+
+    <div class="category">
+      <div class="category-label">Strategy & Problem Solving</div>
+      <div class="skills-grid">
+        <div class="skill-chip" onclick="toggleSkill(this)" data-skill="Complex problem solving">Complex problem solving</div>
+        <div class="skill-chip" onclick="toggleSkill(this)" data-skill="Strategic thinking">Strategic thinking</div>
+        <div class="skill-chip" onclick="toggleSkill(this)" data-skill="Project management">Project management</div>
+        <div class="skill-chip" onclick="toggleSkill(this)" data-skill="Program evaluation">Program evaluation</div>
+        <div class="skill-chip" onclick="toggleSkill(this)" data-skill="Innovation & ideation">Innovation & ideation</div>
+        <div class="skill-chip" onclick="toggleSkill(this)" data-skill="Risk assessment">Risk assessment</div>
+        <div class="skill-chip" onclick="toggleSkill(this)" data-skill="Policy analysis">Policy analysis</div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="selected-count" id="count-display"></div>
+
+  <button class="decode-btn" id="decode-btn" onclick="runDecoder()" disabled>
+    Decode my skills <span class="arrow">→</span>
+  </button>
+
+  <div class="loading" id="loading">
+    <div class="spinner"></div>
+    <span>Analysing your skills...</span>
+  </div>
+
+  <div class="error-msg" id="error-msg"></div>
+
+  <div class="results" id="results">
+    <div class="results-eyebrow">Your career pathways</div>
+    <div class="results-title">Here's where your skills could take you</div>
+    <div id="cards-container"></div>
+  </div>
+
+  <div class="cta-block" id="cta-block">
+    <div class="cta-eyebrow">Ready to go deeper?</div>
+    <div class="cta-title">Your skills are just the starting point.</div>
+    <p class="cta-body">The EXPLORE Career Insights Package pairs a validated strengths assessment with three personalised coaching sessions — so you can turn these possibilities into a clear, actionable career plan built around who you actually are.</p>
+    <a class="cta-link" href="https://empiricalresearch.com.au/explore-career-insights" target="_blank">Learn about EXPLORE →</a>
+  </div>
+
+  <button class="reset-btn" id="reset-btn" onclick="resetDecoder()">Start again</button>
+</div>
+
+<script>
+  const COLORS = [
+    { dot: '#7B5EA7', bg: 'rgba(123,94,167,0.12)', text: '#b39ddb' },
+    { dot: '#e8488a', bg: 'rgba(232,72,138,0.12)', text: '#f08ab8' },
+    { dot: '#4ecdc4', bg: 'rgba(78,205,196,0.12)', text: '#7de0da' },
+    { dot: '#ff8c42', bg: 'rgba(255,140,66,0.12)', text: '#ffb07a' },
+  ];
+
+  let selectedSkills = new Set();
+
+  function toggleSkill(el) {
+    const skill = el.dataset.skill;
+    if (selectedSkills.has(skill)) {
+      selectedSkills.delete(skill);
+      el.classList.remove('selected');
+    } else {
+      selectedSkills.add(skill);
+      el.classList.add('selected');
+    }
+    updateCount();
+  }
+
+  function updateCount() {
+    const n = selectedSkills.size;
+    const display = document.getElementById('count-display');
+    const btn = document.getElementById('decode-btn');
+    if (n === 0) {
+      display.innerHTML = '';
+      btn.disabled = true;
+    } else {
+      display.innerHTML = `<span>${n} skill${n > 1 ? 's' : ''}</span> selected`;
+      btn.disabled = false;
+    }
+  }
+
+  async function runDecoder() {
+    const skills = Array.from(selectedSkills);
+    if (!skills.length) return;
+
+    document.getElementById('loading').classList.add('active');
+    document.getElementById('decode-btn').disabled = true;
+    document.getElementById('results').classList.remove('active');
+    document.getElementById('cta-block').classList.remove('active');
+    document.getElementById('reset-btn').classList.remove('active');
+    document.getElementById('error-msg').classList.remove('active');
+
+    const prompt = `You are a career advisor specialising in PhD graduates and researchers exploring careers in and beyond academia, based in Australia.
+
+A researcher has selected the following skills: ${skills.join(', ')}.
+
+Generate exactly 4 career pathway suggestions that authentically match these skills. Be specific and realistic — not generic. Include both research-adjacent and non-academic options where relevant.
+
+Respond ONLY with a valid JSON array. No preamble, no markdown, no backticks. Format:
+[
+  {
+    "title": "Career pathway name",
+    "description": "2-3 sentences explaining why this fits their skills and what this career actually looks like day-to-day.",
+    "skills_used": ["skill1", "skill2", "skill3"]
+  }
+]
+
+Only include skills from the researcher's selected list in skills_used. Maximum 4 skills per career.`;
+
+    try {
+      const response = await fetch('/api/claude', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1000,
+          messages: [{ role: 'user', content: prompt }]
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.error) throw new Error(data.error);
+
+      const raw = data.content.find(b => b.type === 'text')?.text || '';
+      const clean = raw.replace(/```json|```/g, '').trim();
+      const careers = JSON.parse(clean);
+
+      renderResults(careers);
+    } catch (err) {
+      document.getElementById('error-msg').textContent = 'Something went wrong generating your results. Please try again.';
+      document.getElementById('error-msg').classList.add('active');
+      document.getElementById('decode-btn').disabled = false;
+    }
+
+    document.getElementById('loading').classList.remove('active');
+  }
+
+  function renderResults(careers) {
+    const container = document.getElementById('cards-container');
+    container.innerHTML = '';
+
+    careers.forEach((career, i) => {
+      const color = COLORS[i % COLORS.length];
+      const card = document.createElement('div');
+      card.className = 'career-card';
+
+      const skillTags = career.skills_used.map(s =>
+        `<span class="skill-tag" style="background:${color.bg};color:${color.text}">${s}</span>`
+      ).join('');
+
+      card.innerHTML = `
+        <div class="career-title">
+          <div class="career-dot" style="background:${color.dot}"></div>
+          ${career.title}
+        </div>
+        <p class="career-desc">${career.description}</p>
+        <div class="skills-used">${skillTags}</div>
+      `;
+
+      container.appendChild(card);
+    });
+
+    document.getElementById('results').classList.add('active');
+    document.getElementById('cta-block').classList.add('active');
+    document.getElementById('reset-btn').classList.add('active');
+    document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function resetDecoder() {
+    selectedSkills.clear();
+    document.querySelectorAll('.skill-chip').forEach(c => c.classList.remove('selected'));
+    document.getElementById('count-display').innerHTML = '';
+    document.getElementById('decode-btn').disabled = true;
+    document.getElementById('results').classList.remove('active');
+    document.getElementById('cta-block').classList.remove('active');
+    document.getElementById('reset-btn').classList.remove('active');
+    document.getElementById('error-msg').classList.remove('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+</script>
+</body>
+</html>
